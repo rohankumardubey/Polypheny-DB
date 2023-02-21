@@ -62,16 +62,15 @@ import org.polypheny.db.catalog.entity.CatalogGraphPlacement;
 import org.polypheny.db.catalog.entity.CatalogIndex;
 import org.polypheny.db.catalog.entity.CatalogPartitionPlacement;
 import org.polypheny.db.catalog.entity.CatalogTable;
-import org.polypheny.db.catalog.exceptions.UnknownSchemaException;
 import org.polypheny.db.docker.DockerInstance;
 import org.polypheny.db.docker.DockerManager;
 import org.polypheny.db.docker.DockerManager.Container;
 import org.polypheny.db.docker.DockerManager.ContainerBuilder;
 import org.polypheny.db.prepare.Context;
-import org.polypheny.db.schema.Schema;
+import org.polypheny.db.schema.Entity;
+import org.polypheny.db.schema.Namespace;
 import org.polypheny.db.schema.SchemaPlus;
 import org.polypheny.db.schema.Schemas;
-import org.polypheny.db.schema.Table;
 import org.polypheny.db.transaction.PolyXid;
 import org.polypheny.db.type.PolyType;
 import org.polypheny.db.type.PolyTypeFamily;
@@ -157,7 +156,7 @@ public class Neo4jPlugin extends Plugin {
         private final String pass;
         private final AuthToken auth;
         @Getter
-        private NeoNamespace currentSchema;
+        private NeoSchema currentSchema;
 
         @Getter
         private NeoGraph currentGraph;
@@ -241,7 +240,7 @@ public class Neo4jPlugin extends Plugin {
             Catalog catalog = Catalog.getInstance();
 
             if ( this.currentSchema == null ) {
-                createNewSchema( null, Catalog.getInstance().getSchema( combinedTable.namespaceId ).getName() );
+                createNewSchema( null, combinedTable.getNamespaceName(), combinedTable.namespaceId );
             }
 
             for ( long partitionId : partitionIds ) {
@@ -464,31 +463,19 @@ public class Neo4jPlugin extends Plugin {
 
 
         @Override
-        public void createNewSchema( SchemaPlus rootSchema, String name ) {
-            final Expression expression = Schemas.subSchemaExpression( rootSchema, name, NeoNamespace.class );
-            String namespaceName;
-            String[] splits = name.split( "_" );
-            if ( splits.length >= 3 ) {
-                namespaceName = splits[1];
-            } else {
-                throw new RuntimeException( "Error while generating new namespace" );
-            }
-
-            try {
-                this.currentSchema = new NeoNamespace(
-                        db,
-                        expression,
-                        transactionProvider,
-                        this,
-                        Catalog.getInstance().getSchema( Catalog.defaultDatabaseId, namespaceName ).id );
-            } catch ( UnknownSchemaException e ) {
-                throw new RuntimeException( "Error while generating new namespace" );
-            }
+        public void createNewSchema( SchemaPlus rootSchema, String name, Long id ) {
+            final Expression expression = Schemas.subSchemaExpression( rootSchema, name, NeoSchema.class );
+            this.currentSchema = new NeoSchema(
+                    db,
+                    expression,
+                    transactionProvider,
+                    this,
+                    id );
         }
 
 
         @Override
-        public Table createTableSchema( CatalogTable combinedTable, List<CatalogColumnPlacement> columnPlacementsOnStore, CatalogPartitionPlacement partitionPlacement ) {
+        public Entity createTableSchema( CatalogTable combinedTable, List<CatalogColumnPlacement> columnPlacementsOnStore, CatalogPartitionPlacement partitionPlacement ) {
             return this.currentSchema.createTable( combinedTable, columnPlacementsOnStore, partitionPlacement );
         }
 
@@ -527,7 +514,7 @@ public class Neo4jPlugin extends Plugin {
 
 
         @Override
-        public Schema getCurrentGraphNamespace() {
+        public Namespace getCurrentGraphNamespace() {
             return currentGraph;
         }
 
