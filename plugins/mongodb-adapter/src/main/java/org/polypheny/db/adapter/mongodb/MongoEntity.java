@@ -43,9 +43,22 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.WriteModel;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.linq4j.*;
+import org.apache.calcite.linq4j.AbstractEnumerable;
+import org.apache.calcite.linq4j.Enumerable;
+import org.apache.calcite.linq4j.Enumerator;
+import org.apache.calcite.linq4j.Linq4j;
+import org.apache.calcite.linq4j.Queryable;
 import org.apache.calcite.linq4j.function.Function1;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -73,8 +86,8 @@ import org.polypheny.db.catalog.entity.CatalogCollectionPlacement;
 import org.polypheny.db.catalog.entity.CatalogPartitionPlacement;
 import org.polypheny.db.catalog.entity.CatalogTable;
 import org.polypheny.db.plan.AlgOptCluster;
-import org.polypheny.db.plan.AlgOptTable;
-import org.polypheny.db.plan.AlgOptTable.ToAlgContext;
+import org.polypheny.db.plan.AlgOptEntity;
+import org.polypheny.db.plan.AlgOptEntity.ToAlgContext;
 import org.polypheny.db.plan.AlgTraitSet;
 import org.polypheny.db.plan.Convention;
 import org.polypheny.db.prepare.Prepare.CatalogReader;
@@ -87,10 +100,6 @@ import org.polypheny.db.schema.impl.AbstractTableQueryable;
 import org.polypheny.db.transaction.PolyXid;
 import org.polypheny.db.util.BsonUtil;
 import org.polypheny.db.util.Util;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 
 /**
@@ -167,9 +176,9 @@ public class MongoEntity extends AbstractQueryableTable implements TranslatableT
 
 
     @Override
-    public AlgNode toAlg( ToAlgContext context, AlgOptTable algOptTable, AlgTraitSet traitSet ) {
+    public AlgNode toAlg( ToAlgContext context, AlgOptEntity algOptEntity, AlgTraitSet traitSet ) {
         final AlgOptCluster cluster = context.getCluster();
-        return new MongoScan( cluster, traitSet.replace( MongoAlg.CONVENTION ), algOptTable, this, null );
+        return new MongoScan( cluster, traitSet.replace( MongoAlg.CONVENTION ), algOptEntity, this, null );
     }
 
 
@@ -318,7 +327,7 @@ public class MongoEntity extends AbstractQueryableTable implements TranslatableT
     @Override
     public Modify toModificationAlg(
             AlgOptCluster cluster,
-            AlgOptTable table,
+            AlgOptEntity table,
             CatalogReader catalogReader,
             AlgNode child,
             Operation operation,
@@ -342,7 +351,7 @@ public class MongoEntity extends AbstractQueryableTable implements TranslatableT
     @Override
     public DocumentModify toModificationAlg(
             AlgOptCluster cluster,
-            AlgOptTable table,
+            AlgOptEntity table,
             CatalogReader catalogReader,
             AlgNode child,
             Operation operation,

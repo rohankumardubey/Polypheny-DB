@@ -33,10 +33,15 @@
 
 package org.polypheny.db.adapter.csv;
 
+import java.util.List;
 import org.apache.calcite.linq4j.tree.Blocks;
 import org.apache.calcite.linq4j.tree.Expressions;
 import org.apache.calcite.linq4j.tree.Primitive;
-import org.polypheny.db.adapter.enumerable.*;
+import org.polypheny.db.adapter.enumerable.EnumerableAlg;
+import org.polypheny.db.adapter.enumerable.EnumerableAlgImplementor;
+import org.polypheny.db.adapter.enumerable.EnumerableConvention;
+import org.polypheny.db.adapter.enumerable.PhysType;
+import org.polypheny.db.adapter.enumerable.PhysTypeImpl;
 import org.polypheny.db.algebra.AlgNode;
 import org.polypheny.db.algebra.AlgWriter;
 import org.polypheny.db.algebra.core.Scan;
@@ -44,9 +49,11 @@ import org.polypheny.db.algebra.metadata.AlgMetadataQuery;
 import org.polypheny.db.algebra.type.AlgDataType;
 import org.polypheny.db.algebra.type.AlgDataTypeFactory;
 import org.polypheny.db.algebra.type.AlgDataTypeField;
-import org.polypheny.db.plan.*;
-
-import java.util.List;
+import org.polypheny.db.plan.AlgOptCluster;
+import org.polypheny.db.plan.AlgOptCost;
+import org.polypheny.db.plan.AlgOptEntity;
+import org.polypheny.db.plan.AlgOptPlanner;
+import org.polypheny.db.plan.AlgTraitSet;
 
 
 /**
@@ -60,7 +67,7 @@ public class CsvScan extends Scan implements EnumerableAlg {
     final int[] fields;
 
 
-    protected CsvScan( AlgOptCluster cluster, AlgOptTable table, CsvTranslatableTable csvTable, int[] fields ) {
+    protected CsvScan( AlgOptCluster cluster, AlgOptEntity table, CsvTranslatableTable csvTable, int[] fields ) {
         super( cluster, cluster.traitSetOf( EnumerableConvention.INSTANCE ), table );
         this.csvTable = csvTable;
         this.fields = fields;
