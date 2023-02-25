@@ -44,7 +44,7 @@ import org.polypheny.db.adapter.enumerable.PhysType;
 import org.polypheny.db.adapter.enumerable.PhysTypeImpl;
 import org.polypheny.db.algebra.AlgNode;
 import org.polypheny.db.algebra.AlgWriter;
-import org.polypheny.db.algebra.core.Scan;
+import org.polypheny.db.algebra.core.relational.RelScan;
 import org.polypheny.db.algebra.metadata.AlgMetadataQuery;
 import org.polypheny.db.algebra.type.AlgDataType;
 import org.polypheny.db.algebra.type.AlgDataTypeFactory;
@@ -61,7 +61,7 @@ import org.polypheny.db.plan.AlgTraitSet;
  *
  * Like any table scan, it serves as a leaf node of a query tree.
  */
-public class CsvScan extends Scan implements EnumerableAlg {
+public class CsvScan extends RelScan implements EnumerableAlg {
 
     final CsvTranslatableTable csvTable;
     final int[] fields;

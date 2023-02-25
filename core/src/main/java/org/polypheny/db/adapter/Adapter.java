@@ -50,9 +50,10 @@ import org.polypheny.db.catalog.Catalog;
 import org.polypheny.db.catalog.Catalog.NamespaceType;
 import org.polypheny.db.catalog.entity.CatalogCollection;
 import org.polypheny.db.catalog.entity.CatalogCollectionPlacement;
-import org.polypheny.db.catalog.entity.CatalogColumnPlacement;
 import org.polypheny.db.catalog.entity.CatalogPartitionPlacement;
-import org.polypheny.db.catalog.entity.CatalogTable;
+import org.polypheny.db.catalog.entity.logical.LogicalTable;
+import org.polypheny.db.catalog.entity.physical.PhysicalGraph;
+import org.polypheny.db.catalog.entity.physical.PhysicalTable;
 import org.polypheny.db.config.Config;
 import org.polypheny.db.config.Config.ConfigListener;
 import org.polypheny.db.config.ConfigDocker;
@@ -312,12 +313,12 @@ public abstract class Adapter {
 
     public abstract void createNewSchema( SchemaPlus rootSchema, String name, Long id );
 
-    public abstract Entity createTableSchema( CatalogTable combinedTable, List<CatalogColumnPlacement> columnPlacementsOnStore, CatalogPartitionPlacement partitionPlacement );
+    public abstract PhysicalTable createTableSchema( PhysicalTable boilerplate );
 
     public abstract Namespace getCurrentSchema();
 
 
-    public void createGraphNamespace( SchemaPlus rootSchema, String name, long id ) {
+    public void createGraphNamespace( PhysicalGraph graph ) {
         throw new UnsupportedOperationException( "It is not supported to create a graph with this adapter." );
     }
 
@@ -327,12 +328,7 @@ public abstract class Adapter {
     }
 
 
-    public Namespace getCurrentGraphNamespace() {
-        throw new UnsupportedOperationException( "It is not supported to create a graph with this adapter." );
-    }
-
-
-    public abstract void truncate( Context context, CatalogTable table );
+    public abstract void truncate( Context context, LogicalTable table );
 
     public abstract boolean prepare( PolyXid xid );
 

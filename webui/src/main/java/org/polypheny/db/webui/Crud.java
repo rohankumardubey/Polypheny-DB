@@ -113,7 +113,7 @@ import org.polypheny.db.catalog.entity.CatalogIndex;
 import org.polypheny.db.catalog.entity.CatalogMaterializedView;
 import org.polypheny.db.catalog.entity.CatalogPrimaryKey;
 import org.polypheny.db.catalog.entity.CatalogSchema;
-import org.polypheny.db.catalog.entity.CatalogTable;
+import org.polypheny.db.catalog.entity.logical.LogicalTable;
 import org.polypheny.db.catalog.entity.CatalogView;
 import org.polypheny.db.catalog.entity.MaterializedCriteria;
 import org.polypheny.db.catalog.entity.MaterializedCriteria.CriteriaType;
@@ -295,7 +295,7 @@ public class Crud implements InformationObserver {
         }
 
         // determine if it is a view or a table
-        CatalogTable catalogTable;
+        LogicalTable catalogTable;
         try {
             catalogTable = catalog.getTable( this.databaseId, t[0], t[1] );
             result.setNamespaceType( catalogTable.getNamespaceType() );
@@ -379,8 +379,8 @@ public class Crud implements InformationObserver {
                 ArrayList<SidebarElement> tableTree = new ArrayList<>();
                 ArrayList<SidebarElement> viewTree = new ArrayList<>();
                 ArrayList<SidebarElement> collectionTree = new ArrayList<>();
-                List<CatalogTable> tables = catalog.getTables( schema.id, null );
-                for ( CatalogTable table : tables ) {
+                List<LogicalTable> tables = catalog.getTables( schema.id, null );
+                for ( LogicalTable table : tables ) {
                     String icon = "fa fa-table";
                     if ( table.entityType == EntityType.SOURCE ) {
                         icon = "fa fa-plug";
@@ -466,9 +466,9 @@ public class Crud implements InformationObserver {
             }
         }
 
-        List<CatalogTable> tables = catalog.getTables( databaseId, new Catalog.Pattern( requestedSchema ), null );
+        List<LogicalTable> tables = catalog.getTables( databaseId, new Catalog.Pattern( requestedSchema ), null );
         ArrayList<DbTable> result = new ArrayList<>();
-        for ( CatalogTable t : tables ) {
+        for ( LogicalTable t : tables ) {
             result.add( new DbTable( t.name, t.getNamespaceName(), t.modifiable, t.entityType ) );
         }
         ctx.json( result );
@@ -942,7 +942,7 @@ public class Crud implements InformationObserver {
     private String computeWherePK( final String tableName, final String columnName, final Map<String, String> filter ) {
         StringJoiner joiner = new StringJoiner( " AND ", "", "" );
         Map<String, CatalogColumn> catalogColumns = getCatalogColumns( tableName, columnName );
-        CatalogTable catalogTable;
+        LogicalTable catalogTable;
         try {
             catalogTable = catalog.getTable( databaseId, tableName, columnName );
             CatalogPrimaryKey pk = catalog.getPrimaryKey( catalogTable.primaryKey );
@@ -1117,7 +1117,7 @@ public class Crud implements InformationObserver {
         ArrayList<DbColumn> cols = new ArrayList<>();
 
         try {
-            CatalogTable catalogTable = catalog.getTable( databaseId, t[0], t[1] );
+            LogicalTable catalogTable = catalog.getTable( databaseId, t[0], t[1] );
             ArrayList<String> primaryColumns;
             if ( catalogTable.primaryKey != null ) {
                 CatalogPrimaryKey primaryKey = catalog.getPrimaryKey( catalogTable.primaryKey );
@@ -1162,7 +1162,7 @@ public class Crud implements InformationObserver {
     void getDataSourceColumns( final Context ctx ) throws UnknownDatabaseException, UnknownTableException, UnknownSchemaException {
         UIRequest request = ctx.bodyAsClass( UIRequest.class );
 
-        CatalogTable catalogTable = catalog.getTable( "APP", request.getSchemaName(), request.getTableName() );
+        LogicalTable catalogTable = catalog.getTable( "APP", request.getSchemaName(), request.getTableName() );
 
         if ( catalogTable.entityType == EntityType.VIEW ) {
             ImmutableMap<Long, ImmutableList<Long>> underlyingTable = ((CatalogView) catalogTable).getUnderlyingTables();
@@ -1220,7 +1220,7 @@ public class Crud implements InformationObserver {
     void getAvailableSourceColumns( final Context ctx ) throws UnknownDatabaseException, UnknownTableException, UnknownSchemaException {
         UIRequest request = ctx.bodyAsClass( UIRequest.class );
 
-        CatalogTable table = catalog.getTable( "APP", request.getSchemaName(), request.getTableName() );
+        LogicalTable table = catalog.getTable( "APP", request.getSchemaName(), request.getTableName() );
         ImmutableMap<Integer, ImmutableList<Long>> placements = catalog.getColumnPlacementsByAdapter( table.id );
         Set<Integer> adapterIds = placements.keySet();
         if ( adapterIds.size() > 1 ) {
@@ -1263,7 +1263,7 @@ public class Crud implements InformationObserver {
     void getMaterializedInfo( final Context ctx ) throws UnknownDatabaseException, UnknownTableException, UnknownSchemaException {
         EditTableRequest request = ctx.bodyAsClass( EditTableRequest.class );
 
-        CatalogTable catalogTable = catalog.getTable( databaseId, request.schema, request.table );
+        LogicalTable catalogTable = catalog.getTable( databaseId, request.schema, request.table );
 
         if ( catalogTable.entityType == EntityType.MATERIALIZED_VIEW ) {
             CatalogMaterializedView catalogMaterializedView = (CatalogMaterializedView) catalogTable;
@@ -1587,7 +1587,7 @@ public class Crud implements InformationObserver {
         Map<String, ArrayList<String>> temp = new HashMap<>();
 
         try {
-            CatalogTable catalogTable = catalog.getTable( databaseId, t[0], t[1] );
+            LogicalTable catalogTable = catalog.getTable( databaseId, t[0], t[1] );
 
             // get primary key
             if ( catalogTable.primaryKey != null ) {
@@ -1745,7 +1745,7 @@ public class Crud implements InformationObserver {
         EditTableRequest request = ctx.bodyAsClass( EditTableRequest.class );
         Result result;
         try {
-            CatalogTable catalogTable = catalog.getTable( databaseId, request.schema, request.table );
+            LogicalTable catalogTable = catalog.getTable( databaseId, request.schema, request.table );
             List<CatalogIndex> catalogIndexes = catalog.getIndexes( catalogTable.id, false );
 
             DbColumn[] header = {
@@ -1873,7 +1873,7 @@ public class Crud implements InformationObserver {
 
         UIRequest request = ctx.bodyAsClass( UIRequest.class );
 
-        CatalogTable catalogTable = catalog.getTable( "APP", request.getSchemaName(), request.getTableName() );
+        LogicalTable catalogTable = catalog.getTable( "APP", request.getSchemaName(), request.getTableName() );
 
         if ( catalogTable.entityType == EntityType.VIEW ) {
             ImmutableMap<Long, ImmutableList<Long>> underlyingTableOriginal = ((CatalogView) catalogTable).getUnderlyingTables();
@@ -1905,7 +1905,7 @@ public class Crud implements InformationObserver {
         String schemaName = index.getSchema();
         String tableName = index.getTable();
         try {
-            CatalogTable table = catalog.getTable( databaseId, schemaName, tableName );
+            LogicalTable table = catalog.getTable( databaseId, schemaName, tableName );
             Placement p = new Placement( table.partitionProperty.isPartitioned, catalog.getPartitionGroupNames( table.id ), table.entityType );
             if ( table.entityType == EntityType.VIEW ) {
 
@@ -2454,8 +2454,8 @@ public class Crud implements InformationObserver {
         ArrayList<ForeignKey> fKeys = new ArrayList<>();
         ArrayList<DbTable> tables = new ArrayList<>();
 
-        List<CatalogTable> catalogEntities = catalog.getTables( databaseId, new Catalog.Pattern( request.schema ), null );
-        for ( CatalogTable catalogTable : catalogEntities ) {
+        List<LogicalTable> catalogEntities = catalog.getTables( databaseId, new Catalog.Pattern( request.schema ), null );
+        for ( LogicalTable catalogTable : catalogEntities ) {
             if ( catalogTable.entityType == EntityType.ENTITY || catalogTable.entityType == EntityType.SOURCE ) {
                 // get foreign keys
                 List<CatalogForeignKey> foreignKeys = catalog.getForeignKeys( catalogTable.id );
@@ -3130,7 +3130,7 @@ public class Crud implements InformationObserver {
         }
 
         EntityType entityType = null;
-        CatalogTable catalogTable = null;
+        LogicalTable catalogTable = null;
         if ( request.tableId != null ) {
             String[] t = request.tableId.split( "\\." );
             try {
@@ -3541,7 +3541,7 @@ public class Crud implements InformationObserver {
     private Map<String, CatalogColumn> getCatalogColumns( String schemaName, String tableName ) {
         Map<String, CatalogColumn> dataTypes = new HashMap<>();
         try {
-            CatalogTable table = catalog.getTable( this.databaseId, schemaName, tableName );
+            LogicalTable table = catalog.getTable( this.databaseId, schemaName, tableName );
             List<CatalogColumn> catalogColumns = catalog.getColumns( table.id );
             for ( CatalogColumn catalogColumn : catalogColumns ) {
                 dataTypes.put( catalogColumn.name, catalogColumn );
